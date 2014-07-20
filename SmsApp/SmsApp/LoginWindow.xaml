@@ -1,0 +1,16 @@
+﻿<Window
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="" Height="450" Width="500" WindowStartupLocation="CenterScreen">
+
+    <Canvas Name="Canvas" Background="White">
+        <TextBox Height="30" Width="229" x:Name="Url" Canvas.Left="170" Canvas.Top="53" />
+        <TextBox Height="30" Width="229" x:Name="Username" Canvas.Left="170" Canvas.Top="114" />
+        <PasswordBox Height="30" Width="229" x:Name="Password" Canvas.Left="170" Canvas.Top="175" />
+        <Button Height="50" Width="100" Canvas.Left="203" Canvas.Top="270" Name="Button">Submit</Button>
+        <TextBox IsReadOnly="true" x:Name="Status" Width="492" Canvas.Top="381" Height="39" />
+        <Label Content="Hostname" Height="30" Canvas.Left="79" Canvas.Top="53" Width="86"/>
+        <Label Content="Username" Height="30" Canvas.Left="79" Canvas.Top="114" Width="86"/>
+        <Label Content="Password" Height="30" Canvas.Left="79" Canvas.Top="175" Width="86"/>
+    </Canvas>
+</Window>
