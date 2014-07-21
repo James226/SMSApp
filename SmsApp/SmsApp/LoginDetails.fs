@@ -50,6 +50,33 @@ type MessageHeader = {
 }
 
 [<CLIMutable>]
+[<XmlRoot("message")>]
+type MessageDetails = {
+    [<XmlElement("from")>]
+    From: string
+    [<XmlElement("to")>]
+    To: string
+    [<XmlElement("body")>]
+    Body: string
+}
+
+[<CLIMutable>]
+[<XmlRoot("messages")>]
+type MessageContainer = {
+    [<XmlElement("accountreference")>]
+    AccountReference: string
+    [<XmlElement("message")>]
+    Message : MessageDetails
+}
+
+[<CLIMutable>]
+[<XmlRoot("messageheaders", Namespace = "http://api.esendex.com/ns/")>]
+type MessageHeaders = {
+    [<XmlElement("messageheader")>]
+    MessageHeader: MessageHeader[]
+}
+
+[<CLIMutable>]
 type InboxItem = {
     Id:string
     From:string

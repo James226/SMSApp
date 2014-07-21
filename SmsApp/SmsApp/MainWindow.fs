@@ -14,92 +14,69 @@ open SMSApp.PushNotifications
 
 type MainWindowXaml = XAML<"MainWindow.xaml">
 
-module MainWindow =
-    
-    [<CLIMutable>]
-    [<XmlRoot("message")>]
-    type MessageDetails = {
-        [<XmlElement("from")>]
-        From: string
-        [<XmlElement("to")>]
-        To: string
-        [<XmlElement("body")>]
-        Body: string
-    }
+[<CLIMutable>]
+type Account = {
+    [<XmlElement("reference")>]
+    Reference: string
+    [<XmlElement("label")>]
+    Label: string
+    [<XmlElement("address")>]
+    Address: string
+    [<XmlElement("type")>]
+    Type: string
+    [<XmlElement("messagesremaining")>]
+    MessagesRemaining: string
+    [<XmlElement("expireson")>]
+    ExpiresOn: string
+    [<XmlElement("role")>]
+    Role: string
+}
 
-    [<CLIMutable>]
-    [<XmlRoot("messages")>]
-    type MessageContainer = {
-        [<XmlElement("accountreference")>]
-        AccountReference: string
-        [<XmlElement("message")>]
-        Message : MessageDetails
-    }
-
-    [<CLIMutable>]
-    type Account = {
-        [<XmlElement("reference")>]
-        Reference: string
-        [<XmlElement("label")>]
-        Label: string
-        [<XmlElement("address")>]
-        Address: string
-        [<XmlElement("type")>]
-        Type: string
-        [<XmlElement("messagesremaining")>]
-        MessagesRemaining: string
-        [<XmlElement("expireson")>]
-        ExpiresOn: string
-        [<XmlElement("role")>]
-        Role: string
-    }
-
-    [<CLIMutable>]
-    [<XmlRoot("accounts", Namespace = "http://api.esendex.com/ns/")>]
-    type Accounts = {
-        [<XmlElement("account")>]
-        Account : Account[]
-    }
+[<CLIMutable>]
+[<XmlRoot("accounts", Namespace = "http://api.esendex.com/ns/")>]
+type Accounts = {
+    [<XmlElement("account")>]
+    Account : Account[]
+}
 
 
-    [<CLIMutable>]
-    type Test = {
-        [<XmlElement("status")>]
-        Status:string
-    }
+[<CLIMutable>]
+type Test = {
+    [<XmlElement("status")>]
+    Status:string
+}
 
-    [<CLIMutable>]
-    [<XmlRoot("messageheaders", Namespace = "http://api.esendex.com/ns/")>]
-    type MessageHeaders = {
-        [<XmlElement("messageheader")>]
-        MessageHeader: MessageHeader[]
-    }
+type Consumer(window : MainWindowXaml) =
+    let mainWindow = window
+    interface PushNotificationConsumer with
+        member x.DoStuff(stuff) =
+            stuff |> ignore
 
-    type Consumer(window : MainWindowXaml) =
-        let mainWindow = window
-        interface PushNotificationConsumer with
-            member x.DoStuff(stuff) =
-                Application.Current.Dispatcher.Invoke (fun _ -> window.Notifications.Text <- stuff)
+        member x.MessageReceived(receivedMessage: InboundMessage) =
+            Application.Current.Dispatcher.Invoke (fun _ -> 
+                let inboxItem = { Id = receivedMessage.MessageId; From = receivedMessage.From; Message = receivedMessage.MessageText; ReceivedAt = DateTime.UtcNow.ToString(); Account = receivedMessage.AccountId }
+                window.InboxTable.ItemsSource <- inboxItem :: (window.InboxTable.ItemsSource :?> InboxItem list)
+                )
 
-            member x.MessageReceived(receivedMessage: InboundMessage) =
-                Application.Current.Dispatcher.Invoke (fun _ -> 
-                    let inboxItem = { Id = receivedMessage.MessageId; From = receivedMessage.From; Message = receivedMessage.MessageText; ReceivedAt = DateTime.UtcNow.ToString(); Account = receivedMessage.AccountId }
-                    window.InboxTable.ItemsSource <- inboxItem :: (window.InboxTable.ItemsSource :?> InboxItem list)
-                    )
+        member x.MessageDelivered(deliveredMessage) =
+            Application.Current.Dispatcher.Invoke (fun _ -> 
+                let currentId = window.MessageId.Text
+                match deliveredMessage.MessageId with
+                | currentId -> window.Status.Content <- "Delivered")
 
-            member x.MessageDelivered(deliveredMessage) =
-                Application.Current.Dispatcher.Invoke (fun _ -> 
-                    let currentId = window.MessageId.Text
-                    match deliveredMessage.MessageId with
-                    | currentId -> window.Status.Content <- "Delivered")
-
+type MainWindow(loginDetails : LoginDetails) =
     let GetBasicHeader(loginDetails) = 
             sprintf "%s:%s" loginDetails.Name loginDetails.Password
             |> System.Text.ASCIIEncoding.ASCII.GetBytes
             |> System.Convert.ToBase64String
             |> (fun s -> "Basic " + s)
 
-    let Open(loginDetails : LoginDetails) =
+    let mutable dispatcher : SmsDispatcher = RestDispatcher(loginDetails) :> SmsDispatcher
+
+    member x.SetDispatcher(dis: SmsDispatcher) =
+        dispatcher <- dis
+
+    member x.Open() =
         let mainWindow = MainWindowXaml()
         let mcSerializer = XmlSerializer(typeof<MessageContainer>)
         let accountsSerializer = XmlSerializer(typeof<Accounts>)
@@ -189,6 +166,15 @@ module MainWindow =
             mainWindow.RefreshInbox.Click
             |> Observable.subscribe (fun _ -> GetInboxItems())
 
+        let ChangeProtocol(args) =
+            let protocol = mainWindow.Protocol.Text
+            match protocol with
+            | "REST" -> x.SetDispatcher(RestDispatcher loginDetails :> SmsDispatcher)
+            | "Soap" -> x.SetDispatcher(SoapDispatcher loginDetails :> SmsDispatcher)
+
+        let protocolSub =
+            mainWindow.Protocol.SelectionChanged
+            |> Observable.subscribe ChangeProtocol
         GetInboxItems()
 
         Consumer(mainWindow)

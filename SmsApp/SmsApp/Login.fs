@@ -31,7 +31,7 @@ module Login =
                     let! html = Http.AsyncRequestString("http://" + loginDetails.Url + "/v1.0/accounts", headers = [ Authorization auth ])
                     printfn "%d" html.Length
                    
-                    Application.Current.Dispatcher.Invoke (fun _ -> MainWindow.Open(loginDetails); loginWindow.Root.Close())
+                    Application.Current.Dispatcher.Invoke (fun _ -> MainWindow(loginDetails).Open(); loginWindow.Root.Close())
                 with
                 | :? Exception as ex -> Application.Current.Dispatcher.Invoke (fun _ ->  loginWindow.Status.Text <- "Failure: " + ex.Message; loginWindow.Button.IsEnabled <- true)
             }

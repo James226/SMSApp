@@ -8,9 +8,9 @@
 
     <Canvas x:Name="Canvas" Background="White">
         <Canvas x:Name="SimpleSend" Visibility="Visible"/>
-        <TabControl x:Name="TabControl" Height="506" Width="1093" TabStripPlacement="Left">
+        <TabControl x:Name="TabControl" Height="460" Width="1093" TabStripPlacement="Left">
             <TabItem Header="Send SMS" Width="150" Height="30" IsSelected="true">
-                <Grid Background="#FFE5E5E5">
+                <Grid Background="#FFE5E5E5" Height="496" Width="931">
                     <ComboBox x:Name="AccountSelect" SelectedIndex="0" Margin="186,25,288,447">
                         <ComboBoxItem Content="EX0020344" HorizontalAlignment="Left" Width="166"/>
                     </ComboBox>
@@ -19,10 +19,9 @@
                     <Label Content="From" FlowDirection="RightToLeft" Margin="92,71,756,397"/>
                     <TextBox x:Name="To" TextWrapping="Wrap" Text="" Margin="186,122,288,346"/>
                     <Label Content="To" FlowDirection="RightToLeft" Margin="92,122,756,346"/>
-                    <TextBox x:Name="Message" TextWrapping="Wrap" Margin="186,185,288,91"/>
+                    <TextBox x:Name="Message" TextWrapping="Wrap" Margin="186,185,288,113"/>
                     <Label Content="Message" FlowDirection="RightToLeft" Margin="92,185,756,283"/>
-                    <Button x:Name="Send" Content="Send" Margin="186,429,634,32"/>
-                    <TextBox x:Name="Notifications" HorizontalAlignment="Left" Height="23" Margin="0,473,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="931" Background="#FFF1F0F0" IsReadOnly="True"/>
+                    <Button x:Name="Send" Content="Send" Margin="186,405,634,56"/>
                 </Grid>
             </TabItem>
             <TabItem Header="Sent Message" Width="150" Height="30">
@@ -51,6 +50,12 @@
                     </DataGrid>
                 </Grid>
             </TabItem>
+
         </TabControl>
+        <ComboBox x:Name="Protocol" HorizontalAlignment="Left" Height="23" VerticalAlignment="Center" Width="143" Canvas.Left="916" Canvas.Top="465" SelectedIndex="0">
+            <ComboBoxItem Content="REST" HorizontalAlignment="Left" Width="141"/>
+            <ComboBoxItem Content="Soap" HorizontalAlignment="Left" Width="141"/>
+        </ComboBox>
+
     </Canvas>
 </Window>
