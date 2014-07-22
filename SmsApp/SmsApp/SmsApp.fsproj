@@ -52,6 +52,7 @@
   <Import Project="$(FSharpTargetsPath)" />
   <ItemGroup>
     <Compile Include="LoginDetails.fs" />
+    <Compile Include="ViewModelBase.fs" />
     <Compile Include="SmsDispatcher.fs" />
     <Compile Include="PushNotifications.fs" />
     <Compile Include="MainWindow.fs" />

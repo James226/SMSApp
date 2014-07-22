@@ -2,7 +2,7 @@
 
 open System.Xml.Serialization 
 
-
+[<CLIMutable>]
 type LoginDetails = {
     Url: string
     Name: string

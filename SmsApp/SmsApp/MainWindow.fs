@@ -120,10 +120,17 @@ type MainWindow(loginDetails : LoginDetails) =
             }
             |> Async.Start
 
+        let GoToSentMessage(messageId) =
+            GetSentMessage(messageId)
+            mainWindow.MessageId.Text <- messageId
+            mainWindow.TabControl.SelectedIndex <- 1
+
         let SendMessage(messageContainer) =         
             messageContainer
-            |> SerializeMessage
-            |> SendSerializedMessage
+            |> dispatcher.SendMessage
+            |> GoToSentMessage
+            //|> SerializeMessage
+            //|> SendSerializedMessage
 
         let sendSub = 
             mainWindow.Send.Click
@@ -167,10 +174,12 @@ type MainWindow(loginDetails : LoginDetails) =
             |> Observable.subscribe (fun _ -> GetInboxItems())
 
         let ChangeProtocol(args) =
-            let protocol = mainWindow.Protocol.Text
-            match protocol with
-            | "REST" -> x.SetDispatcher(RestDispatcher loginDetails :> SmsDispatcher)
-            | "Soap" -> x.SetDispatcher(SoapDispatcher loginDetails :> SmsDispatcher)
+            let protocol = mainWindow.Protocol.SelectedItem :?> ComboBoxItem
+            match protocol.Content.ToString() with
+            | "REST" -> x.SetDispatcher(RestDispatcher loginDetails :> SmsDispatcher); MessageBox.Show("Change To REST")
+            | "Soap" -> x.SetDispatcher(SoapDispatcher loginDetails :> SmsDispatcher); MessageBox.Show("Change To Soap")
+            | _ -> MessageBox.Show("Unknown Protocol: " + protocol.Content.ToString())
+            |> ignore
 
         let protocolSub =
             mainWindow.Protocol.SelectionChanged

@@ -7,39 +7,79 @@ open FSharpx
 open FSharp.Data
 open FSharp.Data.HttpRequestHeaders
 
-module Login =    
-    type LoginWindow = XAML<"LoginWindow.xaml">
+type LoginModel = {
+    Url: string
+    Username: string
+    Status: string
+}
 
-    let LoadWindow() =
-        let loginWindow = LoginWindow()
+type LoginViewModel() = 
+    inherit ViewModelBase()
 
-        let GetUserDetails() = 
-            { Url = loginWindow.Url.Text; Name=loginWindow.Username.Text; Password=loginWindow.Password.Password}
+    let authenticated = new Event<_>()
 
-        let GetBasicHeader(loginDetails) = 
+    let mutable model = { Url = ""; Username = ""; Status = "" }
+
+    let GetUserDetails(password: string) = 
+            { Url = model.Url; Name=model.Username; Password=password }
+
+    let GetBasicHeader(loginDetails) = 
             sprintf "%s:%s" loginDetails.Name loginDetails.Password
             |> System.Text.ASCIIEncoding.ASCII.GetBytes
             |> System.Convert.ToBase64String
             |> (fun s -> "Basic " + s)
 
-        let Authenticate(loginDetails : LoginDetails) = 
-            async {
-                Application.Current.Dispatcher.Invoke (fun _ -> loginWindow.Status.Text <- "Authenticating..."; loginWindow.Button.IsEnabled <- false)
-                let auth = GetBasicHeader loginDetails
+    let AuthenticateDetails(loginDetails: LoginDetails, status : string -> unit) =
+        async {
+            let auth = GetBasicHeader loginDetails
                     
-                try
-                    let! html = Http.AsyncRequestString("http://" + loginDetails.Url + "/v1.0/accounts", headers = [ Authorization auth ])
-                    printfn "%d" html.Length
-                   
-                    Application.Current.Dispatcher.Invoke (fun _ -> MainWindow(loginDetails).Open(); loginWindow.Root.Close())
-                with
-                | :? Exception as ex -> Application.Current.Dispatcher.Invoke (fun _ ->  loginWindow.Status.Text <- "Failure: " + ex.Message; loginWindow.Button.IsEnabled <- true)
-            }
-            |> Async.Start
+            try
+                status("Authenticating...")
+                let! html = Http.AsyncRequestString("http://" + loginDetails.Url + "/v1.0/accounts", headers = [ Authorization auth ])
+                status("Authenticated Successfully!")
+                authenticated.Trigger(loginDetails)
+            with
+            | ex -> status("Unable to authenticate: " + ex.Message)
+        }
+        |> Async.Start
 
-        let submitSub = 
-            loginWindow.Button.Click
-            |> Observable.map (fun _ -> GetUserDetails())
-            |> Observable.subscribe Authenticate
+    member x.Url 
+        with get () = model.Url
+        and set value = model <- { model with Url = value }
+                        x.OnPropertyChanged "Url"
+
+    member x.Username 
+        with get () = model.Username
+        and set value = model <- { model with Username = value }
+                        x.OnPropertyChanged "Username"
+
+    member x.Status 
+        with get () = model.Status
+        and set value = model <- { model with Status = value }
+                        x.OnPropertyChanged "Status"
+
+    member x.Authenticate = 
+        new RelayCommand ((fun canExecute -> true), (fun password -> 
+            (password :?> PasswordBox).Password
+            |> GetUserDetails
+            |> (fun details -> (details, (fun status -> x.Status <- status)))
+            |> AuthenticateDetails))
+
+    member x.Authenticated = authenticated.Publish
+
+module Login =    
+    type LoginWindow = XAML<"LoginWindow.xaml">
+
+    let LoadWindow() =
+        let loginWindow = LoginWindow()
+        let loginViewModel = LoginViewModel()
+        loginWindow.Root.DataContext <- loginViewModel
+
+        let Authenticated(loginDetails: LoginDetails) =
+            Application.Current.Dispatcher.Invoke (fun _ -> MainWindow(loginDetails).Open(); loginWindow.Root.Close())
+
+        let authenticatedSub =
+            loginViewModel.Authenticated
+            |> Observable.subscribe Authenticated
 
         loginWindow.Root
