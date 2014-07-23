@@ -39,6 +39,7 @@ type RestDispatcher(loginDetails: LoginDetails) =
             |> SendSerializedMessage
 
 open System
+open System.Text.RegularExpressions
 open System.ServiceModel
 open Microsoft.FSharp.Linq
 open Microsoft.FSharp.Data.TypeProviders
@@ -62,3 +63,20 @@ type SoapDispatcher(loginDetails: LoginDetails) =
                         | innerExn -> innerExn.Message
                     printfn "An exception occurred:\n %s\n %s" exn.Message innerMessage; ""
                 | exn -> printfn "An exception occurred: %s" exn.Message; ""
+
+type FormPostDispatcher(loginDetails: LoginDetails) =
+    let GetBasicHeader(loginDetails) = 
+        sprintf "%s:%s" loginDetails.Name loginDetails.Password
+        |> System.Text.ASCIIEncoding.ASCII.GetBytes
+        |> System.Convert.ToBase64String
+        |> (fun s -> "Basic " + s)
+
+    let auth = GetBasicHeader loginDetails
+
+    interface SmsDispatcher with
+        member x.SendMessage messageContainer =
+            let response = Http.RequestString("http://" + loginDetails.Url.Substring(4) + "/secure/messenger/formpost/SendSMS.aspx", body = FormValues [ "Username", loginDetails.Name; "Password", loginDetails.Password; "Account", messageContainer.AccountReference; "Recipient", messageContainer.Message.To; "Originator", messageContainer.Message.From; "Body", messageContainer.Message.Body; "PlainText", "1" ])
+            let reg = Regex.Match(response, "MessageIDs=(.*)")
+            match reg.Success with
+            | true -> reg.Groups.[1].Captures.[0].Value
+            | false -> ""

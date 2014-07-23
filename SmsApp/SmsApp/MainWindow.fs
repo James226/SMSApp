@@ -64,6 +64,10 @@ type Consumer(window : MainWindowXaml) =
                 match deliveredMessage.MessageId with
                 | currentId -> window.Status.Content <- "Delivered")
 
+type SendSMSViewModel() =
+    inherit ViewModelBase()
+
+
 type MainWindow(loginDetails : LoginDetails) =
     let GetBasicHeader(loginDetails) = 
             sprintf "%s:%s" loginDetails.Name loginDetails.Password
@@ -178,6 +182,7 @@ type MainWindow(loginDetails : LoginDetails) =
             match protocol.Content.ToString() with
             | "REST" -> x.SetDispatcher(RestDispatcher loginDetails :> SmsDispatcher); MessageBox.Show("Change To REST")
             | "Soap" -> x.SetDispatcher(SoapDispatcher loginDetails :> SmsDispatcher); MessageBox.Show("Change To Soap")
+            | "FormPost" -> x.SetDispatcher(FormPostDispatcher loginDetails :> SmsDispatcher); MessageBox.Show("Change To FormPost")
             | _ -> MessageBox.Show("Unknown Protocol: " + protocol.Content.ToString())
             |> ignore
 
