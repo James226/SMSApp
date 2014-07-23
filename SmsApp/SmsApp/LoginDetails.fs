@@ -3,13 +3,6 @@
 open System.Xml.Serialization 
 
 [<CLIMutable>]
-type LoginDetails = {
-    Url: string
-    Name: string
-    Password: string
-}
-
-[<CLIMutable>]
 type Endpoint = {
     [<XmlElement("phonenumber")>]
     PhoneNumber: string

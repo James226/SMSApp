@@ -141,4 +141,16 @@
     </Reference>
     <Reference Include="WindowsBase" />
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\SmsApp.Models\SmsApp.Models.fsproj">
+      <Name>SmsApp.Models</Name>
+      <Project>{abd71197-95b7-41b0-8b62-901792f6e511}</Project>
+      <Private>True</Private>
+    </ProjectReference>
+    <ProjectReference Include="..\..\SmsApp.ViewModels\SmsApp.ViewModels.fsproj">
+      <Name>SmsApp.ViewModels</Name>
+      <Project>{9a77d18d-184f-476a-a580-6b972995c254}</Project>
+      <Private>True</Private>
+    </ProjectReference>
+  </ItemGroup>
 </Project>

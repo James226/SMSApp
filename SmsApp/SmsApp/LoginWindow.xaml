@@ -1,7 +1,7 @@
 ﻿<Window
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:local="clr-namespace:SMSApp;assembly=SMSApp"
+        xmlns:local="clr-namespace:SmsApp.ViewModels;assembly=SmsApp.ViewModels"
         Title="" Height="450" Width="500" WindowStartupLocation="CenterScreen">
 
     <Window.DataContext>
