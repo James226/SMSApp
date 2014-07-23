@@ -11,6 +11,7 @@ open System.IO
 open System.Linq
 open SMSApp
 open SMSApp.PushNotifications
+open SmsApp.Models
 
 type MainWindowXaml = XAML<"MainWindow.xaml">
 
@@ -129,9 +130,7 @@ type MainWindow(loginDetails : LoginDetails) =
             messageContainer
             |> dispatcher.SendMessage
             |> GoToSentMessage
-            //|> SerializeMessage
-            //|> SendSerializedMessage
-
+            
         let sendSub = 
             mainWindow.Send.Click
             |> Observable.map (fun _ -> GetMessageDetails())

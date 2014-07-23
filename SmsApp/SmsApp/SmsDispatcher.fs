@@ -8,6 +8,8 @@ open System.Xml.Serialization
 open FSharp.Data
 open FSharp.Data.HttpRequestHeaders
 
+open SmsApp.Models
+
 type RestDispatcher(loginDetails: LoginDetails) =
     let mcSerializer = XmlSerializer(typeof<MessageContainer>)
     let mdrSerializer = XmlSerializer(typeof<MessageHeaders>)
