@@ -59,6 +59,7 @@
             <ComboBoxItem Content="REST" HorizontalAlignment="Left" Width="141"/>
             <ComboBoxItem Content="Soap" HorizontalAlignment="Left" Width="141"/>
             <ComboBoxItem Content="FormPost" HorizontalAlignment="Left" Width="141"/>
+            <ComboBoxItem Content="SMPP" HorizontalAlignment="Left" Width="141"/>
         </ComboBox>
 
     </Canvas>

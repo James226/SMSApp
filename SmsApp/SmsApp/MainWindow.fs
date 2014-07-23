@@ -126,9 +126,9 @@ type MainWindow(loginDetails : LoginDetails) =
             |> Async.Start
 
         let GoToSentMessage(messageId) =
-            GetSentMessage(messageId)
-            mainWindow.MessageId.Text <- messageId
-            mainWindow.TabControl.SelectedIndex <- 1
+            match messageId with
+            | "" -> GetSentMessage(messageId); mainWindow.MessageId.Text <- messageId; mainWindow.TabControl.SelectedIndex <- 1
+            | _ -> MessageBox.Show("Unable to determine message id") |> ignore
 
         let SendMessage(messageContainer) =         
             messageContainer
@@ -182,6 +182,7 @@ type MainWindow(loginDetails : LoginDetails) =
             | "REST" -> x.SetDispatcher(RestDispatcher loginDetails :> SmsDispatcher); MessageBox.Show("Change To REST")
             | "Soap" -> x.SetDispatcher(SoapDispatcher loginDetails :> SmsDispatcher); MessageBox.Show("Change To Soap")
             | "FormPost" -> x.SetDispatcher(FormPostDispatcher loginDetails :> SmsDispatcher); MessageBox.Show("Change To FormPost")
+            | "SMPP" -> x.SetDispatcher(SMPPDispatcher loginDetails :> SmsDispatcher); MessageBox.Show("Change To SMPP")
             | _ -> MessageBox.Show("Unknown Protocol: " + protocol.Content.ToString())
             |> ignore
 

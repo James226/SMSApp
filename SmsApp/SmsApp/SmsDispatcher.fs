@@ -82,3 +82,48 @@ type FormPostDispatcher(loginDetails: LoginDetails) =
             match reg.Success with
             | true -> reg.Groups.[1].Captures.[0].Value
             | false -> ""
+
+open System.Windows
+open JamaaTech.Smpp.Net.Client
+open JamaaTech.Smpp.Net.Lib
+open JamaaTech.Smpp.Net.Lib.Protocol
+
+type SMPPDispatcher(loginDetails: LoginDetails) =
+    let smppClient = new SmppClient()
+    
+    let Init() =
+        smppClient.Properties.SystemID <- "test"
+        smppClient.Properties.Password <- "test"
+        smppClient.Properties.Port <- 30134
+        smppClient.Properties.Host <- "smppapi-01." + loginDetails.Url.Substring(4)
+        smppClient.Properties.SystemType <- ""
+        smppClient.Properties.DefaultServiceType <- ""
+
+        smppClient.AutoReconnectDelay <- 3000
+        smppClient.KeepAliveInterval <- 15000
+
+        smppClient.Start()
+
+
+    let smppStatusSub =
+        smppClient.ConnectionStateChanged
+        |> Observable.subscribe (fun args -> MessageBox.Show("New State: " + args.CurrentState.ToString() + " .. Previous State: " + args.PreviousState.ToString()) |> ignore)
+
+    do Init()
+
+    interface SmsDispatcher with
+        member x.SendMessage messageContainer =
+            let submitSm = SubmitSm()
+            submitSm.SourceAddress.Address <- "44987542897"
+            submitSm.DestinationAddress.Address <- "44758723872"
+            submitSm.DestinationAddress.Npi <- NumberingPlanIndicator.ISDN
+            submitSm.DestinationAddress.Ton <- TypeOfNumber.International
+            submitSm.SourceAddress.Npi <- NumberingPlanIndicator.ISDN
+            submitSm.SourceAddress.Ton <- TypeOfNumber.International
+            submitSm.EsmClass <- EsmClass.Default
+            submitSm.RegisteredDelivery <- RegisteredDelivery.DeliveryReceipt
+            submitSm.ServiceType <- ""
+            submitSm.SetMessageText(messageContainer.Message.Body, DataCoding.SMSCDefault)
+
+            let response = smppClient.CustomSendPDU(submitSm) :?> SubmitSmResp
+            response.MessageID
