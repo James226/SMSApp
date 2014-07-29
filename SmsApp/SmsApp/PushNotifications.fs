@@ -43,7 +43,7 @@ module PushNotifications =
         abstract member MessageReceived: InboundMessage -> unit
         abstract member MessageDelivered: MessageDelivered -> unit
 
-    type MessageReceievedController(consumer: PushNotificationConsumer) =
+    type MessageReceivedController(consumer: PushNotificationConsumer) =
         inherit ApiController()
             member x.Post(inboundMessage: InboundMessage) = 
                 consumer.MessageReceived inboundMessage

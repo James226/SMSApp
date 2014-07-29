@@ -87,13 +87,14 @@ open System.Windows
 open JamaaTech.Smpp.Net.Client
 open JamaaTech.Smpp.Net.Lib
 open JamaaTech.Smpp.Net.Lib.Protocol
+open System.Linq
 
-type SMPPDispatcher(loginDetails: LoginDetails) =
+type SMPPDispatcher(loginDetails: LoginDetails, status: string -> unit) =
     let smppClient = new SmppClient()
     
     let Init() =
-        smppClient.Properties.SystemID <- "test"
-        smppClient.Properties.Password <- "test"
+        smppClient.Properties.SystemID <- loginDetails.Name.Split('@').First()
+        smppClient.Properties.Password <- loginDetails.Password
         smppClient.Properties.Port <- 30134
         smppClient.Properties.Host <- "smppapi-01." + loginDetails.Url.Substring(4)
         smppClient.Properties.SystemType <- ""
@@ -107,7 +108,7 @@ type SMPPDispatcher(loginDetails: LoginDetails) =
 
     let smppStatusSub =
         smppClient.ConnectionStateChanged
-        |> Observable.subscribe (fun args -> MessageBox.Show("New State: " + args.CurrentState.ToString() + " .. Previous State: " + args.PreviousState.ToString()) |> ignore)
+        |> Observable.subscribe (fun args -> status("New State: " + args.CurrentState.ToString() + " .. Previous State: " + args.PreviousState.ToString()))
 
     do Init()
 

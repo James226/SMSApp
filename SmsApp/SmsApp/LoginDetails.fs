@@ -77,3 +77,47 @@ type InboxItem = {
     ReceivedAt:string
     Account:string
 }
+
+[<CLIMutable>]
+type Account = {
+    [<XmlAttribute("id")>]
+    Id: string
+    [<XmlElement("reference")>]
+    Reference: string
+    [<XmlElement("label")>]
+    Label: string
+    [<XmlElement("address")>]
+    Address: string
+    [<XmlElement("type")>]
+    Type: string
+    [<XmlElement("messagesremaining")>]
+    MessagesRemaining: string
+    [<XmlElement("expireson")>]
+    ExpiresOn: string
+    [<XmlElement("role")>]
+    Role: string
+}
+
+[<CLIMutable>]
+[<XmlRoot("accounts", Namespace = "http://api.esendex.com/ns/")>]
+type Accounts = {
+    [<XmlElement("account")>]
+    Account : Account[]
+}
+
+[<CLIMutable>]
+[<XmlRoot("pushregistration", Namespace = "http://api.esendex.com/ns/")>]
+type PushRegistration = {
+    [<XmlAttribute("id")>]
+    Id: string
+    [<XmlElement("concurrencyid")>]
+    ConcurrencyId: string
+    [<XmlElement("accountid")>]
+    AccountId: string
+    [<XmlElement("pushurl")>]
+    PushUrl: string
+    [<XmlElement("type")>]
+    Type: string
+    [<XmlElement("displayname")>]
+    DisplayName: string
+}

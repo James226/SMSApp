@@ -15,38 +15,6 @@ open SmsApp.Models
 
 type MainWindowXaml = XAML<"MainWindow.xaml">
 
-[<CLIMutable>]
-type Account = {
-    [<XmlElement("reference")>]
-    Reference: string
-    [<XmlElement("label")>]
-    Label: string
-    [<XmlElement("address")>]
-    Address: string
-    [<XmlElement("type")>]
-    Type: string
-    [<XmlElement("messagesremaining")>]
-    MessagesRemaining: string
-    [<XmlElement("expireson")>]
-    ExpiresOn: string
-    [<XmlElement("role")>]
-    Role: string
-}
-
-[<CLIMutable>]
-[<XmlRoot("accounts", Namespace = "http://api.esendex.com/ns/")>]
-type Accounts = {
-    [<XmlElement("account")>]
-    Account : Account[]
-}
-
-
-[<CLIMutable>]
-type Test = {
-    [<XmlElement("status")>]
-    Status:string
-}
-
 type Consumer(window : MainWindowXaml) =
     let mainWindow = window
     interface PushNotificationConsumer with
@@ -68,7 +36,6 @@ type Consumer(window : MainWindowXaml) =
 type SendSMSViewModel() =
     inherit ViewModelBase()
 
-
 type MainWindow(loginDetails : LoginDetails) =
     let GetBasicHeader(loginDetails) = 
             sprintf "%s:%s" loginDetails.Name loginDetails.Password
@@ -77,9 +44,16 @@ type MainWindow(loginDetails : LoginDetails) =
             |> (fun s -> "Basic " + s)
 
     let mutable dispatcher : SmsDispatcher = RestDispatcher(loginDetails) :> SmsDispatcher
+    let mutable registeredNotifications : string list = []
 
     member x.SetDispatcher(dis: SmsDispatcher) =
         dispatcher <- dis
+
+    member x.AddNotification(id: string) =
+        registeredNotifications <- id :: registeredNotifications
+
+    member x.GetNotifications() =
+        registeredNotifications
 
     member x.Open() =
         let mainWindow = MainWindowXaml()
@@ -92,9 +66,9 @@ type MainWindow(loginDetails : LoginDetails) =
         let GetMessageDetails() = 
             { AccountReference = mainWindow.AccountSelect.Text; Message = { From = mainWindow.From.Text; To = mainWindow.To.Text; Body = mainWindow.Message.Text } }
 
-        let SerializeMessage(messageContainer) = 
+        let SerializeMessage(messageContainer, serializer : XmlSerializer) = 
             let ms = new System.IO.MemoryStream()
-            mcSerializer.Serialize(ms, messageContainer)
+            serializer.Serialize(ms, messageContainer)
             ms.Seek(0L, System.IO.SeekOrigin.Begin) |> ignore 
             let reader = new StreamReader(ms)
             reader.ReadToEnd()
@@ -107,11 +81,15 @@ type MainWindow(loginDetails : LoginDetails) =
             mainWindow.Body.Content <- messageHeader.Summary
 
         let GetSentMessage(messageId) =
-            let http = Http.RequestStream("http://" + loginDetails.Url + "/v1.0/messageheaders/" + messageId, headers = [ Authorization auth ])
+            System.Threading.Thread.Sleep(500)
+            try
+                let http = Http.RequestStream("http://" + loginDetails.Url + "/v1.0/messageheaders/" + messageId, headers = [ Authorization auth ])
 
-            http.ResponseStream
-            |> DeserializeMessageHeader
-            |> DisplayMessageHeader
+                http.ResponseStream
+                |> DeserializeMessageHeader
+                |> DisplayMessageHeader
+            with
+            | ex -> MessageBox.Show(ex.Message) |> ignore
 
         let SendSerializedMessage(serializedMessage) =
             async {                    
@@ -127,8 +105,8 @@ type MainWindow(loginDetails : LoginDetails) =
 
         let GoToSentMessage(messageId) =
             match messageId with
-            | "" -> GetSentMessage(messageId); mainWindow.MessageId.Text <- messageId; mainWindow.TabControl.SelectedIndex <- 1
-            | _ -> MessageBox.Show("Unable to determine message id") |> ignore
+            | "" -> MessageBox.Show("Unable to determine message id") |> ignore
+            | _ -> GetSentMessage(messageId); mainWindow.MessageId.Text <- messageId; mainWindow.TabControl.SelectedIndex <- 1
 
         let SendMessage(messageContainer) =         
             messageContainer
@@ -145,9 +123,31 @@ type MainWindow(loginDetails : LoginDetails) =
             let stream = new MemoryStream(bytes)
             accountsSerializer.Deserialize stream :?> Accounts
 
+        let DeserializePushRegistration(src : string) = 
+            let serializer = XmlSerializer(typeof<PushRegistration>)
+            let bytes = System.Text.Encoding.ASCII.GetBytes(src)
+            let stream = new MemoryStream(bytes)
+            serializer.Deserialize stream :?> PushRegistration
+
+        let RegisterPushNotifications(accountId: string, notificationType: string) =
+            let serializer = XmlSerializer(typeof<PushRegistration>)
+            let registration = {
+                Id = "";
+                ConcurrencyId = "2c7d34fc-84a9-4f4d-9014-5b3173402903";
+                AccountId = accountId;
+                PushUrl = "http://10.1.6.16:8090/api/" + notificationType;
+                Type = notificationType;
+                DisplayName = "SMS App"
+                }
+            let message = SerializeMessage(registration, serializer)
+            let response = DeserializePushRegistration(Http.RequestString("http://" + loginDetails.Url + "/v1.2/pushregistrations", headers = [ Authorization auth; ContentType HttpContentTypes.Xml ], body = TextRequest message))
+            response.Id
+
         let PopulateAccountsList(accounts : Accounts) =
             mainWindow.AccountSelect.Items.Clear()
             for acct in accounts.Account do
+                x.AddNotification(RegisterPushNotifications(acct.Id, "MessageDelivered"))
+                x.AddNotification(RegisterPushNotifications(acct.Id, "MessageReceived"))
                 mainWindow.AccountSelect.Items.Add(acct.Reference) |> ignore
             mainWindow.AccountSelect.SelectedIndex <- 0
 
@@ -179,20 +179,31 @@ type MainWindow(loginDetails : LoginDetails) =
         let ChangeProtocol(args) =
             let protocol = mainWindow.Protocol.SelectedItem :?> ComboBoxItem
             match protocol.Content.ToString() with
-            | "REST" -> x.SetDispatcher(RestDispatcher loginDetails :> SmsDispatcher); MessageBox.Show("Change To REST")
-            | "Soap" -> x.SetDispatcher(SoapDispatcher loginDetails :> SmsDispatcher); MessageBox.Show("Change To Soap")
-            | "FormPost" -> x.SetDispatcher(FormPostDispatcher loginDetails :> SmsDispatcher); MessageBox.Show("Change To FormPost")
-            | "SMPP" -> x.SetDispatcher(SMPPDispatcher loginDetails :> SmsDispatcher); MessageBox.Show("Change To SMPP")
-            | _ -> MessageBox.Show("Unknown Protocol: " + protocol.Content.ToString())
-            |> ignore
+            | "REST" -> x.SetDispatcher(RestDispatcher loginDetails :> SmsDispatcher)
+            | "Soap" -> x.SetDispatcher(SoapDispatcher loginDetails :> SmsDispatcher)
+            | "FormPost" -> x.SetDispatcher(FormPostDispatcher loginDetails :> SmsDispatcher)
+            | "SMPP" -> x.SetDispatcher(SMPPDispatcher (loginDetails, (fun message -> Application.Current.Dispatcher.Invoke (fun _ -> mainWindow.ConnectionStatus.Content <- message))) :> SmsDispatcher )
+            | _ -> MessageBox.Show("Unknown Protocol: " + protocol.Content.ToString()) |> ignore
 
         let protocolSub =
             mainWindow.Protocol.SelectionChanged
             |> Observable.subscribe ChangeProtocol
+
+        let OnClose() =
+            let notifications = x.GetNotifications()
+            for id in notifications do
+                Http.Request("http://" + loginDetails.Url + "/v1.2/pushregistrations/" + id, httpMethod = HttpMethod.Delete, headers = [ Authorization auth; ContentType HttpContentTypes.Xml ]) |> ignore
+
+        let closeSub = 
+            mainWindow.Root.Closing 
+            |> Observable.subscribe (fun _ -> OnClose())
+
         GetInboxItems()
 
         Consumer(mainWindow)
         |> PushNotifications.Start
+
+        
 
         mainWindow.Root.Show()
         

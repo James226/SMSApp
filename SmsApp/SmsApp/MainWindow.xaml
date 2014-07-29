@@ -32,8 +32,10 @@
                     <TextBox x:Name="MessageId" HorizontalAlignment="Left" Height="27" Margin="110,9,0,0" TextWrapping="Wrap" Text="" VerticalAlignment="Top" Width="240"/>
                     <Label Content="Message Id" HorizontalAlignment="Left" Margin="35,10,0,0" VerticalAlignment="Top"/>
                     <Button x:Name="SentMessageSearch" Content="Search" HorizontalAlignment="Left" Height="27" Margin="355,9,0,0" VerticalAlignment="Top" Width="91"/>
-                    <Label x:Name="Status" Content="Label" HorizontalAlignment="Left" Margin="225,112,0,0" VerticalAlignment="Top" Width="171"/>
-                    <Label x:Name="Body" Content="aaa" HorizontalAlignment="Left" Margin="225,156,0,0" VerticalAlignment="Top" Height="159" Width="235"/>
+                    <Label x:Name="Status" Content="" HorizontalAlignment="Left" Margin="225,112,0,0" VerticalAlignment="Top" Width="171"/>
+                    <Label x:Name="Body" Content="" HorizontalAlignment="Left" Margin="225,156,0,0" VerticalAlignment="Top" Height="159" Width="235"/>
+                    <Label Content="Status" HorizontalAlignment="Left" Height="26" Margin="76,112,0,0" VerticalAlignment="Top" Width="122" FlowDirection="RightToLeft"/>
+                    <Label Content="Body" HorizontalAlignment="Left" Height="34" Margin="76,156,0,0" VerticalAlignment="Top" Width="122" FlowDirection="RightToLeft"/>
 
                 </Grid>
             </TabItem>
@@ -61,6 +63,6 @@
             <ComboBoxItem Content="FormPost" HorizontalAlignment="Left" Width="141"/>
             <ComboBoxItem Content="SMPP" HorizontalAlignment="Left" Width="141"/>
         </ComboBox>
-
+        <Label x:Name="ConnectionStatus" Content="" HorizontalAlignment="Left" Height="31" VerticalAlignment="Top" Width="451" Canvas.Left="157" Canvas.Top="465"/>
     </Canvas>
 </Window>
