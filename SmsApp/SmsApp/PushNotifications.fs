@@ -4,6 +4,7 @@ open System
 open System.Text
 open System.Web.Http
 open System.Net.Http
+open System.Runtime.Serialization
 open System.Web.Http.SelfHost 
 open Ninject
 open System.Web.Http.Dependencies
@@ -38,10 +39,31 @@ module PushNotifications =
         OccurredAt: string
     }
 
+    [<CLIMutable>]
+    type AccountEventHandlerOptions = {
+        username: string
+        password: string
+        account: string
+        notificationType: string
+        id: string
+        originator: string
+        recipient: string
+        body: string
+        eventType: string
+        sentAt: string
+        receivedAt:string
+        occurredAt: string
+    }
+
+    type Route = {
+        id: RouteParameter
+    }
+
     type PushNotificationConsumer =
         abstract member DoStuff: string -> unit
         abstract member MessageReceived: InboundMessage -> unit
         abstract member MessageDelivered: MessageDelivered -> unit
+        abstract member MessageNotification: AccountEventHandlerOptions -> unit
 
     type MessageReceivedController(consumer: PushNotificationConsumer) =
         inherit ApiController()
@@ -60,6 +82,12 @@ module PushNotifications =
             member x.Post(messageFailed: MessageFailed) = 
                 consumer.DoStuff "Message Failed"
                 "Message Failed"
+
+    type AccountEventHandlerController(consumer: PushNotificationConsumer) =
+        inherit ApiController()
+            member x.Post(data: AccountEventHandlerOptions) =
+                consumer.MessageNotification data
+                "Account EventHandler"
 
     let CreateResolver(kernel) : IDependencyResolver = 
         new NinjectResolver(kernel) :> IDependencyResolver

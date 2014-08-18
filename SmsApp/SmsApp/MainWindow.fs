@@ -17,6 +17,17 @@ type MainWindowXaml = XAML<"MainWindow.xaml">
 
 type Consumer(window : MainWindowXaml) =
     let mainWindow = window
+
+    let GetEventType(data) =
+        match data.eventType with
+        | null -> data.notificationType
+        | _ -> data.eventType
+
+    let GetNotificationTime(data) =
+        match data.occurredAt with
+        | null -> data.receivedAt
+        | _ -> data.occurredAt
+
     interface PushNotificationConsumer with
         member x.DoStuff(stuff) =
             stuff |> ignore
@@ -32,6 +43,10 @@ type Consumer(window : MainWindowXaml) =
                 let currentId = window.MessageId.Text
                 match deliveredMessage.MessageId with
                 | currentId -> window.Status.Content <- "Delivered")
+
+        member x.MessageNotification(data) =
+            Application.Current.Dispatcher.Invoke (fun _ ->
+                window.ConnectionStatus.Content <- String.Format("{0} Notification: [Message {1}]: {2}", DateTime.Parse(GetNotificationTime data).ToString(), GetEventType data, data.id))
 
 type SendSMSViewModel() =
     inherit ViewModelBase()
@@ -135,7 +150,7 @@ type MainWindow(loginDetails : LoginDetails) =
                 Id = "";
                 ConcurrencyId = "2c7d34fc-84a9-4f4d-9014-5b3173402903";
                 AccountId = accountId;
-                PushUrl = "http://10.1.6.16:8090/api/" + notificationType;
+                PushUrl = "http://10.1.6.11:8090/api/" + notificationType;
                 Type = notificationType;
                 DisplayName = "SMS App"
                 }
