@@ -56,7 +56,7 @@ type SoapDispatcher(loginDetails: LoginDetails) =
         member x.SendMessage messageContainer =
             try
                 let messengerHeader = sendService.ServiceTypes.MessengerHeader(Account=messageContainer.AccountReference, Username=loginDetails.Name, Password=loginDetails.Password)
-                x.sendClient.SendMessage(messengerHeader, messageContainer.Message.To, messageContainer.Message.Body, sendService.ServiceTypes.MessageType.Text)
+                x.sendClient.SendMessage(messengerHeader, messageContainer.Message.To, messageContainer.Message.Body, sendService.ServiceTypes.MessageType.Unicode)
             with
                 | :? ServerTooBusyException as exn ->
                     let innerMessage =
@@ -96,10 +96,11 @@ type SMPPDispatcher(loginDetails: LoginDetails, status: string -> unit) =
         smppClient.Properties.SystemID <- loginDetails.Name.Split('@').First()
         smppClient.Properties.Password <- loginDetails.Password
         smppClient.Properties.Port <- 30134
-        smppClient.Properties.Host <- "smppapi-01." + loginDetails.Url.Substring(4)
+        smppClient.Properties.Host <- "smpp." + loginDetails.Url.Substring(4)
         smppClient.Properties.SystemType <- ""
         smppClient.Properties.DefaultServiceType <- ""
-
+        
+        
         smppClient.AutoReconnectDelay <- 3000
         smppClient.KeepAliveInterval <- 15000
 
@@ -115,8 +116,8 @@ type SMPPDispatcher(loginDetails: LoginDetails, status: string -> unit) =
     interface SmsDispatcher with
         member x.SendMessage messageContainer =
             let submitSm = SubmitSm()
-            submitSm.SourceAddress.Address <- "44987542897"
-            submitSm.DestinationAddress.Address <- "44758723872"
+            submitSm.SourceAddress.Address <- messageContainer.Message.From
+            submitSm.DestinationAddress.Address <- messageContainer.Message.To
             submitSm.DestinationAddress.Npi <- NumberingPlanIndicator.ISDN
             submitSm.DestinationAddress.Ton <- TypeOfNumber.International
             submitSm.SourceAddress.Npi <- NumberingPlanIndicator.ISDN

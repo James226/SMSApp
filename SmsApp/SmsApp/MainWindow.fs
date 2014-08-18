@@ -161,7 +161,8 @@ type MainWindow(loginDetails : LoginDetails) =
             |> Observable.subscribe GetSentMessage
         
         let DisplayInboxItems(items : MessageHeader[]) =
-            mainWindow.InboxTable.ItemsSource <- [for item in items -> { Id = item.Id; From = item.From.PhoneNumber; Message = item.Summary; ReceivedAt = DateTime.Parse(item.ReceivedAt).ToString(); Account = item.Reference }]
+            if items <> null then
+                mainWindow.InboxTable.ItemsSource <- [for item in items -> { Id = item.Id; From = item.From.PhoneNumber; Message = item.Summary; ReceivedAt = DateTime.Parse(item.ReceivedAt).ToString(); Account = item.Reference }]
                 
 
         let GetInboxItems() = 
